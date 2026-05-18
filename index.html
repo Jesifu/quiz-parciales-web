@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Quiz - Preguntas de Parciales | Desarrollo y Arquitecturas Web</title>
+<style>
+  :root {
+    --navy: #1a2847;
+    --navy-dark: #0f1a30;
+    --navy-light: #2a3a5f;
+    --burgundy: #7a1f2b;
+    --burgundy-light: #9a2f3b;
+    --gold: #c9a961;
+    --cream: #f5f1e8;
+    --bg: #f7f5ef;
+    --text: #1a2030;
+    --muted: #6a6a78;
+    --ok: #2d6a3e;
+    --ok-light: #e3f1e7;
+    --bad: #8a2828;
+    --bad-light: #f5e1e1;
+    --border: #d8d3c4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: var(--cream);
+    padding: 24px 32px;
+    border-bottom: 4px solid var(--burgundy);
+  }
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  header .subtitle {
+    font-size: 13px;
+    color: var(--gold);
+    opacity: 0.95;
+  }
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+  .controls {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .controls-row:last-child { margin-bottom: 0; }
+  .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 4px;
+  }
+  select, button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  select:hover, button:hover { border-color: var(--navy); }
+  button.primary {
+    background: var(--navy);
+    color: var(--cream);
+    border-color: var(--navy);
+    font-weight: 500;
+  }
+  button.primary:hover { background: var(--navy-light); }
+  button.danger {
+    background: var(--burgundy);
+    color: var(--cream);
+    border-color: var(--burgundy);
+  }
+  button.danger:hover { background: var(--burgundy-light); }
+  .progress-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0 4px;
+    display: flex;
+  }
+  .progress-fill-ok {
+    height: 100%;
+    background: var(--ok);
+    transition: width 0.3s;
+  }
+  .progress-fill-bad {
+    height: 100%;
+    background: var(--burgundy);
+    transition: width 0.3s;
+  }
+  .stats {
+    display: flex;
+    gap: 18px;
+    font-size: 13px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .stats span strong { color: var(--navy); }
+  .stats .stat-ok strong { color: var(--ok); }
+  .stats .stat-bad strong { color: var(--bad); }
+
+  .card-container {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(26,40,71,0.08);
+    overflow: hidden;
+  }
+  .card-meta {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-meta .block-tag {
+    background: var(--burgundy);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .card-body { padding: 24px 28px; }
+  .question {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14.5px;
+    color: var(--text);
+    line-height: 1.4;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .option:hover:not(:disabled) {
+    border-color: var(--navy);
+    background: #fafaf5;
+  }
+  .option:disabled { cursor: default; }
+  .option .letter {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .option .text { flex: 1; }
+  .option.correct {
+    border-color: var(--ok);
+    background: var(--ok-light);
+  }
+  .option.correct .letter { background: var(--ok); }
+  .option.wrong {
+    border-color: var(--bad);
+    background: var(--bad-light);
+  }
+  .option.wrong .letter { background: var(--bad); }
+  .option .icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    font-weight: 700;
+    margin-left: 8px;
+  }
+  .option.correct .icon { color: var(--ok); }
+  .option.wrong .icon { color: var(--bad); }
+
+  .explanation {
+    margin-top: 20px;
+    padding: 18px 20px;
+    background: #faf8f3;
+    border-left: 4px solid var(--gold);
+    border-radius: 4px;
+    font-size: 14px;
+    color: #2a3040;
+  }
+  .explanation h4 {
+    color: var(--burgundy);
+    margin: 14px 0 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .explanation h4:first-child { margin-top: 0; }
+  .explanation p { margin: 0 0 10px; }
+  .explanation ul, .explanation ol { margin: 6px 0 10px; padding-left: 22px; }
+  .explanation li { margin-bottom: 4px; }
+  .explanation table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .explanation th, .explanation td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .explanation th {
+    background: var(--navy);
+    color: var(--cream);
+    font-weight: 600;
+  }
+  .explanation tr:nth-child(even) td { background: white; }
+  .explanation code {
+    background: #f0ece2;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12.5px;
+    color: var(--burgundy);
+  }
+  .explanation pre {
+    background: var(--navy-dark);
+    color: #e8e4d8;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin: 8px 0;
+  }
+  .explanation pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  .feedback-banner {
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .feedback-banner.ok { background: var(--ok-light); color: var(--ok); border: 1px solid var(--ok); }
+  .feedback-banner.bad { background: var(--bad-light); color: var(--bad); border: 1px solid var(--bad); }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    gap: 12px;
+  }
+  .nav-row button { min-width: 110px; }
+  .position {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .position strong { color: var(--navy); }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 16px 18px; }
+    main { padding: 14px 12px 60px; }
+    .card-body { padding: 18px 16px; }
+    .question { font-size: 16px; }
+    .controls-row { gap: 8px; }
+    select, button { font-size: 13px; padding: 6px 10px; }
+    .option { font-size: 13.5px; padding: 12px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Quiz · Preguntas de Parciales</h1>
+  <div class="subtitle">Desarrollo y Arquitecturas Web · Prof. Claudio Milio · Multiple Choice</div>
+</header>
+
+<main>
+  <div class="controls">
+    <div class="controls-row">
+      <span class="label">Bloque:</span>
+      <select id="blockFilter">
+        <option value="all">Todos los bloques</option>
+        <option value="1">1 · Redes, arquitecturas y sistemas</option>
+        <option value="2">2 · HTML, formularios y DOM</option>
+        <option value="3">3 · XML, DTD y XML Schema</option>
+        <option value="4">4 · ASP / ASP.NET y modelo de objetos</option>
+        <option value="5">5 · Estado, cookies y configuración</option>
+        <option value="6">6 · Criptografía</option>
+      </select>
+      <span class="label" style="margin-left:8px">Modo:</span>
+      <select id="modeFilter">
+        <option value="all">Todas</option>
+        <option value="pending">Solo sin responder</option>
+        <option value="wrong">Solo erradas</option>
+      </select>
+      <button id="shuffleBtn">Mezclar preguntas</button>
+      <button id="resetBtn" class="danger">Reiniciar</button>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill-ok" id="progressOk"></div>
+      <div class="progress-fill-bad" id="progressBad"></div>
+    </div>
+    <div class="stats">
+      <span>Total: <strong id="statTotal">0</strong></span>
+      <span class="stat-ok">Correctas: <strong id="statOk">0</strong></span>
+      <span class="stat-bad">Erradas: <strong id="statBad">0</strong></span>
+      <span>Sin responder: <strong id="statPending">0</strong></span>
+      <span>Puntaje: <strong id="statScore">—</strong></span>
+    </div>
+  </div>
+
+  <div id="cardWrap"></div>
+
+  <div class="nav-row">
+    <button id="prevBtn">← Anterior</button>
+    <span class="position" id="position">—</span>
+    <button id="nextBtn" class="primary">Siguiente →</button>
+  </div>
+</main>
+
+<script>
+const QUESTIONS = [
+  // BLOQUE 1
+  {
+    id: 1, block: 1, blockName: "Redes, arquitecturas y sistemas",
+    q: "¿Cuál es la diferencia principal entre un sistema cliente-servidor y un sistema distribuido?",
+    options: [
+      "En cliente-servidor un servidor central responde a múltiples clientes; un sistema distribuido tiene múltiples nodos que aparecen como un único sistema coherente.",
+      "El sistema cliente-servidor no usa red; el sistema distribuido sí.",
+      "Cliente-servidor es tolerante a fallos; el sistema distribuido depende de un único nodo central.",
+      "Son sinónimos: describen exactamente la misma arquitectura."
+    ],
+    correct: 0,
+    explanation: `<p>El <strong>modelo cliente-servidor</strong> es una tecnología donde el cliente inicia un requerimiento y el servidor responde con datos o recursos. Hay clientes delgados (toda la lógica en el servidor, ej.: navegador) y clientes gruesos.</p>
+    <p>Un <strong>sistema distribuido</strong> es un sistema construido sobre una red que aparece frente a los usuarios como un único sistema coherente. Los recursos están físicamente distribuidos en nodos heterogéneos.</p>
+    <table>
+      <tr><th>Cliente-Servidor</th><th>Sistema Distribuido</th></tr>
+      <tr><td>Servidor central responde a múltiples clientes.</td><td>Múltiples nodos colaboran entre sí.</td></tr>
+      <tr><td>Arquitectura jerárquica centralizada.</td><td>Sin único punto de control. Tolerante a fallos.</td></tr>
+      <tr><td>Un fallo del servidor afecta a todos los clientes.</td><td>Si falla un nodo, el sistema sigue funcionando.</td></tr>
+      <tr><td>Ejemplo: sitio web con servidor único.</td><td>Ejemplo: Internet, CORBA.</td></tr>
+    </table>`
+  },
+  {
+    id: 2, block: 1, blockName: "Redes, arquitecturas y sistemas",
+    q: "En el ciclo de vida cliente-servidor, ¿qué recibe SIEMPRE el navegador del cliente?",
+    options: [
+      "El código fuente del servidor (ASP, PHP, C#).",
+      "HTML (u otro formato renderizable). El cliente nunca ve código del servidor.",
+      "Una conexión directa a la base de datos.",
+      "Una copia compilada de la página."
+    ],
+    correct: 1,
+    explanation: `<p>Ciclo de vida:</p>
+    <ul>
+      <li>El usuario ingresa una URL o genera una acción (click, submit).</li>
+      <li>El navegador genera una solicitud HTTP (GET o POST) y la envía al servidor.</li>
+      <li>El servidor recibe la solicitud, ejecuta la lógica de negocio y consulta la base de datos.</li>
+      <li>El servidor genera una respuesta en HTML (u otro formato).</li>
+      <li>El navegador renderiza la respuesta. <strong>El cliente SIEMPRE recibe HTML</strong> — nunca ve código del servidor.</li>
+    </ul>
+    <pre><code>[Cliente] ──solicitud HTTP──▶ [Servidor] ──consulta──▶ [BD] ──respuesta HTML──▶ [Cliente]</code></pre>`
+  },
+  {
+    id: 3, block: 1, blockName: "Redes, arquitecturas y sistemas",
+    q: "¿Cuál es la característica principal de un sistema monolítico?",
+    options: [
+      "Cada componente se despliega de forma independiente.",
+      "Todos los componentes (presentación, lógica, datos) están fuertemente integrados y se despliegan como una única unidad.",
+      "No tiene base de datos.",
+      "Solo puede correr en arquitecturas cloud."
+    ],
+    correct: 1,
+    explanation: `<p>Sistema monolítico: aplicación en la que todos los componentes (presentación, lógica de negocio y acceso a datos) están <strong>fuertemente integrados</strong> y se despliegan como una única unidad. Todos los módulos corren en un único proceso.</p>
+    <ul>
+      <li><strong>Ventaja:</strong> simple de desarrollar y desplegar inicialmente.</li>
+      <li><strong>Desventaja:</strong> difícil de escalar y mantener. Un fallo puede afectar toda la aplicación.</li>
+    </ul>
+    <p>Contrasta con arquitecturas de microservicios, donde cada componente es independiente.</p>`
+  },
+
+  // BLOQUE 2
+  {
+    id: 4, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Qué representa el DOM (Document Object Model)?",
+    options: [
+      "Un protocolo de red para enviar datos XML por HTTP.",
+      "Una API estándar (W3C) que representa el documento HTML/XML como un árbol jerárquico de nodos.",
+      "Un lenguaje de marcado para definir interfaces de usuario.",
+      "Una base de datos para almacenar documentos web."
+    ],
+    correct: 1,
+    explanation: `<p>El <strong>DOM</strong> es una API estándar (W3C) para acceder y manipular documentos HTML y XML. Representa el documento como un árbol de nodos jerárquico. Permite navegar, añadir, modificar o eliminar cualquier elemento desde JavaScript.</p>
+    <h4>Ventajas de la estructura arbórea</h4>
+    <ul>
+      <li>Acceso directo a cualquier nodo sin recorrer toda la estructura.</li>
+      <li>Relaciones padre-hijo explícitas (<code>parentNode</code>, <code>childNodes</code>).</li>
+      <li>Búsquedas eficientes podando ramas que no corresponden.</li>
+      <li>Inserción y eliminación sin reorganizar toda la estructura.</li>
+    </ul>
+    <p>Métodos típicos: <code>document.getElementById('id')</code>, <code>elemento.firstChild</code>, <code>elemento.removeChild(hijo)</code>.</p>`
+  },
+  {
+    id: 5, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Qué objeto representa la ventana del navegador (raíz del modelo cliente)?",
+    options: [
+      "document",
+      "window",
+      "navigator",
+      "form"
+    ],
+    correct: 1,
+    explanation: `<p><code>window</code>: representa la ventana del navegador. Es el objeto global raíz — todos los demás son propiedades de window.</p>
+    <p><code>document</code>: representa la página HTML cargada (DOM propiamente dicho).</p>
+    <table>
+      <tr><th>Nivel</th><th>Objeto</th></tr>
+      <tr><td>1 — Navegador</td><td><code>window</code> — raíz</td></tr>
+      <tr><td>2 — Página</td><td><code>document</code> — body, forms[], images[], links[]</td></tr>
+      <tr><td>3 — Formulario</td><td><code>form</code></td></tr>
+      <tr><td>4 — Control</td><td>input, select, textarea, button</td></tr>
+      <tr><td>5 — Propiedad</td><td><code>.value</code></td></tr>
+    </table>
+    <p>Acceso completo: <code>window.document.form1.txtNombre.value</code></p>`
+  },
+  {
+    id: 6, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Cuál es una diferencia clave entre los métodos GET y POST?",
+    options: [
+      "GET envía datos en el cuerpo de la solicitud; POST en la URL.",
+      "GET tiene tamaño limitado y los datos viajan visibles en la URL; POST no tiene límite y los datos viajan ocultos en el cuerpo.",
+      "GET solo funciona en HTTPS; POST en HTTP.",
+      "POST se puede guardar como favorito; GET no."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>GET</th><th>POST</th></tr>
+      <tr><td>Datos visibles en la URL: <code>pagina.aspx?nombre=Juan</code></td><td>Datos NO visibles. Viajan en el cuerpo HTTP.</td></tr>
+      <tr><td>Tamaño limitado (longitud de URL).</td><td>Sin limitación de tamaño.</td></tr>
+      <tr><td>No usar para datos sensibles.</td><td>Usar para datos sensibles y formularios grandes.</td></tr>
+      <tr><td>Se puede guardar como favorito.</td><td>No se puede guardar como favorito.</td></tr>
+      <tr><td><code>Request.QueryString('campo')</code></td><td><code>Request.Form('campo')</code></td></tr>
+    </table>`
+  },
+  {
+    id: 7, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Cuál de las siguientes NO es una propiedad típica del elemento <form>?",
+    options: [
+      "action",
+      "method",
+      "onclick",
+      "enctype"
+    ],
+    correct: 2,
+    explanation: `<p>Propiedades del formulario:</p>
+    <ul>
+      <li><strong>action:</strong> URL de la página que procesa los datos.</li>
+      <li><strong>method:</strong> GET (URL) o POST (cuerpo).</li>
+      <li><strong>name:</strong> nombre del form para JavaScript.</li>
+      <li><strong>enctype:</strong> codificación. Archivos: <code>multipart/form-data</code>.</li>
+      <li><strong>target:</strong> dónde se muestra la respuesta (<code>_self</code>, <code>_blank</code>).</li>
+    </ul>
+    <p><code>onclick</code> es un EVENTO del DOM, no una propiedad del formulario en sí.</p>`
+  },
+  {
+    id: 8, block: 2, blockName: "HTML, formularios y DOM",
+    q: "Si se envía un formulario por POST, ¿con qué se recupera el dato en el servidor ASP?",
+    options: [
+      "Request.QueryString('campo')",
+      "Request.Form('campo')",
+      "Response.Write('campo')",
+      "Session('campo')"
+    ],
+    correct: 1,
+    explanation: `<p><strong>POST →</strong> <code>Request.Form('nombreDelCampo')</code></p>
+    <p><strong>GET →</strong> <code>Request.QueryString('nombreDelCampo')</code></p>
+    <p>Ejemplo POST: <code>&lt;input name='usuario'&gt;</code> enviado por POST se lee con <code>Request.Form('usuario')</code>.</p>
+    <p>Ejemplo GET: URL <code>pagina.aspx?ciudad=BuenosAires</code> se lee con <code>Request.QueryString('ciudad')</code>.</p>`
+  },
+  {
+    id: 9, block: 2, blockName: "HTML, formularios y DOM",
+    q: "En ASP.NET, ¿qué mecanismo mantiene automáticamente el valor de los controles entre postbacks?",
+    options: [
+      "Cookies",
+      "ViewState",
+      "Session",
+      "Application"
+    ],
+    correct: 1,
+    explanation: `<p>En ASP.NET los controles <code>&lt;asp:TextBox runat='server'&gt;</code> mantienen su valor automáticamente entre postbacks gracias al <strong>ViewState</strong>, un campo oculto <code>__VIEWSTATE</code> que el framework gestiona por debajo.</p>
+    <p>En ASP clásico no existe; los datos se recuperaban manualmente con <code>Request.Form</code> / <code>Request.QueryString</code>.</p>`
+  },
+  {
+    id: 10, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Qué símbolo se usa en HTML para indicar un enlace interno (ancla) dentro de la misma página?",
+    options: [
+      "@",
+      "#",
+      "&",
+      "?"
+    ],
+    correct: 1,
+    explanation: `<p>El símbolo <code>#</code> indica que el destino es un ancla interna del propio documento.</p>
+    <pre><code>&lt;a href="#seccion1"&gt;Ir a sección 1&lt;/a&gt;
+&lt;h2 id="seccion1"&gt;Sección 1&lt;/h2&gt;</code></pre>
+    <p>Enlace externo: <code>&lt;a href='https://www.google.com'&gt;Texto&lt;/a&gt;</code></p>`
+  },
+  {
+    id: 11, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Qué etiqueta HTML permite incrustar una página web completa dentro de otra?",
+    options: [
+      "<img>",
+      "<a>",
+      "<iframe>",
+      "<link>"
+    ],
+    correct: 2,
+    explanation: `<ul>
+      <li><code>&lt;iframe&gt;</code>: incrusta una página web completa.<br><code>&lt;iframe src='otraPagina.html' width='600' height='400'&gt;&lt;/iframe&gt;</code></li>
+      <li><code>&lt;img&gt;</code>: incrusta una imagen.</li>
+      <li><code>&lt;a&gt;</code>: enlaza a otra página (requiere click).</li>
+    </ul>`
+  },
+  {
+    id: 12, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Cuál de los siguientes es un evento del objeto cliente (browser)?",
+    options: [
+      "Session_Start",
+      "Application_Start",
+      "onclick",
+      "Server.Transfer"
+    ],
+    correct: 2,
+    explanation: `<p>Eventos del cliente (browser / JavaScript):</p>
+    <ul>
+      <li><code>onclick</code>: click sobre un elemento.</li>
+      <li><code>onmouseover</code>: mouse sobre el elemento.</li>
+      <li><code>onkeydown</code>: presión de tecla.</li>
+      <li>Otros: <code>onload</code>, <code>onsubmit</code>, <code>onchange</code>, <code>onfocus</code>, <code>onblur</code>.</li>
+    </ul>
+    <p><code>Session_Start</code> y <code>Application_Start</code> son eventos del SERVIDOR (Global.asax). <code>Server.Transfer</code> es un método del objeto Server.</p>`
+  },
+  {
+    id: 13, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Cuál es uno de los usos principales de JavaScript?",
+    options: [
+      "Conectarse a la base de datos directamente desde el servidor.",
+      "Validar formularios en el cliente antes de enviarlos al servidor (reduce carga del servidor).",
+      "Compilar páginas ASP.NET a código de máquina.",
+      "Reemplazar al motor IIS."
+    ],
+    correct: 1,
+    explanation: `<p>JavaScript es el lenguaje del lado del cliente. Se usa para:</p>
+    <ul>
+      <li><strong>Validar formularios</strong> ANTES de enviarlos al servidor.</li>
+      <li><strong>Crear interactividad:</strong> responder a clicks, movimientos, teclado.</li>
+      <li><strong>Manipular el DOM</strong> dinámicamente sin recargar la página.</li>
+      <li><strong>Peticiones AJAX:</strong> comunicación con el servidor en segundo plano.</li>
+      <li><strong>APIs del navegador:</strong> Geolocation, Web Storage, Canvas.</li>
+    </ul>`
+  },
+  {
+    id: 14, block: 2, blockName: "HTML, formularios y DOM",
+    q: "¿Cuál es la diferencia principal entre un lenguaje compilado y uno interpretado?",
+    options: [
+      "El compilado se traduce línea a línea; el interpretado, completo de antemano.",
+      "El compilado traduce el código completo a código de máquina antes de ejecutarlo; el interpretado lo traduce y ejecuta línea a línea en tiempo de ejecución.",
+      "El compilado solo corre en Windows; el interpretado solo en Linux.",
+      "No hay diferencia técnica real."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>Compilado</th><th>Interpretado</th></tr>
+      <tr><td>Código fuente → código de máquina COMPLETO antes de ejecutar.</td><td>Se traduce y ejecuta LÍNEA A LÍNEA en tiempo de ejecución.</td></tr>
+      <tr><td>Produce un ejecutable (.exe, .dll).</td><td>No produce ejecutable: necesita el intérprete.</td></tr>
+      <tr><td>Ejecución más rápida.</td><td>Ejecución más lenta.</td></tr>
+      <tr><td>Errores detectados en compilación.</td><td>Errores en tiempo de ejecución.</td></tr>
+      <tr><td>Ejemplos: C, C++, C#.</td><td>Ejemplos: Python, JavaScript, VBScript, PHP.</td></tr>
+    </table>`
+  },
+
+  // BLOQUE 3
+  {
+    id: 15, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Cuál es una diferencia clave entre XML y HTML?",
+    options: [
+      "XML usa etiquetas predefinidas; HTML las define el autor.",
+      "XML está diseñado para almacenar y transportar datos (case-sensitive, etiquetas definidas por el autor); HTML está diseñado para presentarlos.",
+      "HTML es jerárquico en árbol; XML es plano.",
+      "Son el mismo lenguaje con distinto nombre."
+    ],
+    correct: 1,
+    explanation: `<p><strong>XML</strong> (eXtensible Markup Language): lenguaje de marcado para almacenar y transportar datos. No tiene etiquetas predefinidas: el autor las define. Case-sensitive. Jerárquico en forma de árbol.</p>
+    <table>
+      <tr><th>XML</th><th>HTML</th></tr>
+      <tr><td>Almacenar y transportar datos.</td><td>Visualizar y presentar datos.</td></tr>
+      <tr><td>Etiquetas definidas por el autor.</td><td>Etiquetas predefinidas y fijas.</td></tr>
+      <tr><td>Case-sensitive: <code>&lt;Casa&gt;</code> ≠ <code>&lt;casa&gt;</code>.</td><td>No es case-sensitive.</td></tr>
+      <tr><td>Todos los elementos deben cerrarse.</td><td>Algunos no necesitan cerrarse.</td></tr>
+      <tr><td>Útil para intercambio de datos.</td><td>Útil para interfaces de usuario.</td></tr>
+    </table>`
+  },
+  {
+    id: 16, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Qué función cumple un XML Schema (XSD)?",
+    options: [
+      "Contiene los datos del documento.",
+      "Define las REGLAS (elementos válidos, tipos de datos, cardinalidad) que debe cumplir un documento XML para ser válido.",
+      "Renderiza el XML en el navegador con estilos visuales.",
+      "Comprime el XML para transmitirlo más rápido."
+    ],
+    correct: 1,
+    explanation: `<p><strong>XML</strong> es el lenguaje de marcado para estructurar datos. <strong>XML Schema (XSD)</strong> define las REGLAS: qué elementos y atributos son válidos, su tipo de dato, cuántas veces pueden aparecer (cardinalidad).</p>
+    <p>El XML contiene los datos; el Schema valida que tengan la estructura correcta.</p>
+    <p><strong>Ejemplo:</strong> XML tiene <code>&lt;edad&gt;25&lt;/edad&gt;</code>. El Schema define que 'edad' debe ser entero entre 0 y 120.</p>`
+  },
+  {
+    id: 17, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Cuál es una diferencia clave entre los parsers DOM y SAX?",
+    options: [
+      "DOM lee en streaming evento por evento; SAX carga el documento entero en memoria.",
+      "DOM carga el XML COMPLETO en memoria como árbol navegable; SAX lo lee secuencialmente disparando eventos (startElement, endElement).",
+      "DOM solo funciona con HTML; SAX solo con XML.",
+      "Ambos consumen exactamente la misma memoria."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>DOM</th><th>SAX</th></tr>
+      <tr><td>Carga el XML COMPLETO en memoria.</td><td>Lee secuencialmente, evento por evento.</td></tr>
+      <tr><td>Árbol de objetos navegable.</td><td>Eventos: startElement, endElement, characters.</td></tr>
+      <tr><td>Acceso aleatorio a cualquier nodo.</td><td>Solo acceso secuencial.</td></tr>
+      <tr><td>Mayor consumo de memoria.</td><td>Muy bajo consumo de memoria.</td></tr>
+      <tr><td>Más fácil de programar.</td><td>Más complejo (basado en eventos).</td></tr>
+      <tr><td>Documentos pequeños/medianos.</td><td>Documentos muy grandes o streaming.</td></tr>
+    </table>
+    <p>En ASP: <code>Server.CreateObject('Microsoft.XMLDOM')</code> o <code>Server.CreateObject('MSXML2.DOMDocument')</code>.</p>`
+  },
+  {
+    id: 18, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Qué define un DTD (Document Type Definition)?",
+    options: [
+      "El estilo visual del documento XML (colores, tipografías).",
+      "La estructura legal del XML: qué elementos existen, su contenido y sus atributos.",
+      "La conexión a la base de datos del documento.",
+      "Las cookies que el servidor envía al cliente."
+    ],
+    correct: 1,
+    explanation: `<p>El <strong>DTD</strong> define la estructura legal de un documento XML: qué elementos existen, cuál es su contenido, y qué atributos pueden tener. Un documento es <em>válido</em> si está bien formado Y cumple con su DTD. Puede ser <strong>interno</strong> o <strong>externo</strong> (.dtd).</p>
+    <pre><code>&lt;!DOCTYPE nombre_raiz [
+  &lt;!ELEMENT nombre_raiz (hijo1, hijo2)&gt;
+  &lt;!ELEMENT hijo1 (#PCDATA)&gt;
+  &lt;!ELEMENT hijo2 (#PCDATA)&gt;
+  &lt;!ATTLIST hijo1 atributo CDATA #REQUIRED&gt;
+]&gt;</code></pre>`
+  },
+  {
+    id: 19, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Cuál de las siguientes es una palabra reservada de DTD?",
+    options: [
+      "<!STYLE>",
+      "<!ELEMENT>",
+      "<!FUNCTION>",
+      "<!CLASS>"
+    ],
+    correct: 1,
+    explanation: `<p>Las 4 palabras reservadas principales del DTD: <code>&lt;!ELEMENT&gt;</code>, <code>&lt;!ATTLIST&gt;</code>, <code>&lt;!ENTITY&gt;</code>, <code>#PCDATA</code>.</p>
+    <p>Ejemplo de 4 primeros renglones (CasaFindeSemana):</p>
+    <pre><code>&lt;!DOCTYPE CasaFindeSemana [
+  &lt;!ELEMENT CasaFindeSemana (Casa)&gt;
+  &lt;!ELEMENT Casa (Ubicacion, Estado, Extension)&gt;
+  &lt;!ELEMENT Ubicacion (#PCDATA)&gt;</code></pre>`
+  },
+  {
+    id: 20, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Con qué palabra reservada se declara un atributo en un DTD?",
+    options: [
+      "<!ELEMENT>",
+      "<!ATTLIST>",
+      "<!ENTITY>",
+      "<!NOTATION>"
+    ],
+    correct: 1,
+    explanation: `<p>Con la declaración <code>&lt;!ATTLIST&gt;</code>. Define los atributos de un elemento, su tipo y valor por defecto.</p>
+    <p>Sintaxis: <code>&lt;!ATTLIST elemento nombre_atributo tipo valor_por_defecto&gt;</code></p>
+    <pre><code>&lt;!ATTLIST libro  id  CDATA  #REQUIRED&gt;</code></pre>
+    <p>Tipos de valor por defecto:</p>
+    <ul>
+      <li><code>#REQUIRED</code>: obligatorio.</li>
+      <li><code>#IMPLIED</code>: opcional.</li>
+      <li><code>#FIXED 'valor'</code>: valor fijo.</li>
+      <li><code>'valor'</code>: valor por defecto.</li>
+    </ul>`
+  },
+  {
+    id: 21, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Qué significa #PCDATA?",
+    options: [
+      "Public Character Data — texto público accesible por todos.",
+      "Parsed Character Data — texto que SERÁ analizado por el parser (expande entidades como &lt; → <).",
+      "Private Character Data — texto cifrado.",
+      "Pure Character Data — texto sin caracteres especiales."
+    ],
+    correct: 1,
+    explanation: `<p><code>#PCDATA</code> = <strong>Parsed Character Data</strong>. Texto que SERÁ analizado por el parser XML.</p>
+    <ul>
+      <li>El parser interpreta el contenido: busca y expande entidades (<code>&amp;amp;</code> → <code>&amp;</code>, <code>&amp;lt;</code> → <code>&lt;</code>).</li>
+      <li>Si el texto contiene <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code>, DEBEN escaparse con entidades.</li>
+      <li>Se usa en declaración de elementos con texto: <code>&lt;!ELEMENT titulo (#PCDATA)&gt;</code></li>
+      <li>El resultado final es texto plano sin etiquetas.</li>
+    </ul>
+    <pre><code>&lt;descripcion&gt;Precio: 5 &amp;lt; 10&lt;/descripcion&gt;  &lt;!-- parser lee: 5 &lt; 10 --&gt;</code></pre>`
+  },
+  {
+    id: 22, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Qué significa #CDATA y cuál es su comportamiento?",
+    options: [
+      "Character Data — texto que el parser NO interpreta; se trata como literal puro (permite < > & sin escapar).",
+      "Compiled Data — texto compilado a binario.",
+      "Cached Data — texto guardado en caché del cliente.",
+      "Client Data — texto que solo ve el cliente."
+    ],
+    correct: 0,
+    explanation: `<p><code>#CDATA</code> = <strong>Character Data</strong>. Texto que el parser XML NO interpreta. Se trata como texto literal puro.</p>
+    <ul>
+      <li>El parser NO expande entidades ni interpreta etiquetas dentro de un bloque CDATA.</li>
+      <li>Permite incluir <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code> sin escaparlos.</li>
+      <li>Se delimita con <code>&lt;![CDATA[ ...contenido... ]]&gt;</code></li>
+    </ul>
+    <pre><code>&lt;script&gt;&lt;![CDATA[
+  if (a &lt; b &amp;&amp; c &gt; d) { alert('Correcto'); }
+]]&gt;&lt;/script&gt;</code></pre>
+    <p><strong>Diferencia con #PCDATA:</strong> PCDATA ES parseado; CDATA NO es parseado.</p>`
+  },
+  {
+    id: 23, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Cuál es una ventaja de XML Schema (XSD) sobre DTD?",
+    options: [
+      "DTD soporta más tipos de datos que XSD.",
+      "XSD es en sí mismo un documento XML válido, soporta tipos de datos (integer, date, boolean), namespaces y minOccurs/maxOccurs.",
+      "DTD usa namespaces; XSD no.",
+      "DTD permite minOccurs/maxOccurs; XSD no."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>DTD</th><th>XML Schema (XSD)</th></tr>
+      <tr><td>Sintaxis propia, NO es XML.</td><td>Es en sí mismo un documento XML válido. ✓</td></tr>
+      <tr><td>No soporta tipos de datos (todo es texto).</td><td>Tipos: string, integer, date, boolean, decimal.</td></tr>
+      <tr><td>No soporta namespaces.</td><td>Soporte completo de namespaces.</td></tr>
+      <tr><td>Menos expresivo.</td><td>Más expresivo y extensible.</td></tr>
+      <tr><td>Más antiguo y simple.</td><td>Estándar actual recomendado por W3C.</td></tr>
+      <tr><td>Sin control de cardinalidad detallado.</td><td><code>minOccurs</code> / <code>maxOccurs</code>.</td></tr>
+    </table>`
+  },
+  {
+    id: 24, block: 3, blockName: "XML, DTD y XML Schema",
+    q: "¿Cuál de los siguientes NO es un error en un documento XML?",
+    options: [
+      "<Casa>...</casa> — mayúsculas y minúsculas distintas.",
+      "<libro id='5'> — atributo entre comillas.",
+      "<libro id=5> — atributo sin comillas.",
+      "Dos elementos raíz en el mismo documento."
+    ],
+    correct: 1,
+    explanation: `<p>Errores más frecuentes en XML:</p>
+    <ul>
+      <li><strong>Etiquetas no cerradas:</strong> <code>&lt;nombre&gt;Juan</code></li>
+      <li><strong>Etiquetas mal anidadas:</strong> <code>&lt;a&gt;&lt;b&gt;&lt;/a&gt;&lt;/b&gt;</code> (debe cerrarse en orden inverso).</li>
+      <li><strong>Case sensitivity:</strong> <code>&lt;Casa&gt;</code> y <code>&lt;/casa&gt;</code> no coinciden.</li>
+      <li><strong>Atributos sin comillas:</strong> <code>&lt;libro id=5&gt;</code></li>
+      <li><strong>Caracteres especiales sin escapar:</strong> <code>5 &lt; 10</code> debe ser <code>5 &amp;lt; 10</code>.</li>
+      <li><strong>Más de un elemento raíz.</strong></li>
+      <li><strong><code>&amp;</code> sin escapar:</strong> debe ser <code>&amp;amp;</code>.</li>
+    </ul>
+    <p>Usar comillas en los atributos es la forma CORRECTA, no un error.</p>`
+  },
+
+  // BLOQUE 4
+  {
+    id: 25, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Cuántos objetos predefinidos provee ASP para manejar el ciclo de vida de las solicitudes web?",
+    options: [
+      "5",
+      "7",
+      "10",
+      "3"
+    ],
+    correct: 1,
+    explanation: `<p>ASP provee <strong>7 objetos predefinidos</strong>:</p>
+    <table>
+      <tr><th>Objeto</th><th>Para qué sirve</th></tr>
+      <tr><td>Application</td><td>Información compartida por TODOS los usuarios. Lock()/Unlock().</td></tr>
+      <tr><td>ASPError</td><td>Condiciones de error. Server.GetLastError().</td></tr>
+      <tr><td>ObjectContext</td><td>Control de transacciones (MTS). SetComplete()/SetAbort().</td></tr>
+      <tr><td>Request</td><td>Cliente → servidor: Form, QueryString, Cookies.</td></tr>
+      <tr><td>Response</td><td>Servidor → cliente: Write, Redirect, Cookies, Expires.</td></tr>
+      <tr><td>Server</td><td>Funciones IIS: CreateObject, Execute, Transfer, HTMLEncode, URLEncode.</td></tr>
+      <tr><td>Session</td><td>Información individual por usuario. SessionID único. 20 min timeout.</td></tr>
+    </table>`
+  },
+  {
+    id: 26, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Cuál es la única propiedad del objeto Server en ASP?",
+    options: [
+      "Timeout",
+      "ScriptTimeout",
+      "SessionID",
+      "ContentType"
+    ],
+    correct: 1,
+    explanation: `<p><strong>Única propiedad — <code>ScriptTimeout</code>:</strong> tiempo máximo (en segundos) que puede ejecutarse un script en el servidor antes de cancelarse.</p>
+    <p><strong>Método para incorporar componente — <code>CreateObject('ProgID')</code>:</strong> crea una instancia de un componente COM.</p>
+    <pre><code>Set conexion = Server.CreateObject('ADODB.Connection')
+Set objAd    = Server.CreateObject('MSWC.AdRotator')</code></pre>`
+  },
+  {
+    id: 27, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Para qué sirve Server.CreateObject('ProgID') dentro de una página ASP?",
+    options: [
+      "Para crear una variable de sesión.",
+      "Para instanciar un componente COM en el servidor (BD, AdRotator, FileSystem, email).",
+      "Para redireccionar al cliente a otra página.",
+      "Para escribir HTML en la respuesta."
+    ],
+    correct: 1,
+    explanation: `<p><code>Server.CreateObject('ProgID')</code> <strong>instancia y usa objetos COM</strong> (Component Object Model) dentro de una página ASP. Es el mecanismo para incorporar componentes externos: bases de datos, envío de emails, manejo de archivos, banners, etc.</p>
+    <pre><code>Set DB = Server.CreateObject('ADODB.Connection')
+DB.Open 'Provider=SQLOLEDB;Data Source=servidor;...'</code></pre>`
+  },
+  {
+    id: 28, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Cuál es la diferencia entre URLEncode y HTMLEncode?",
+    options: [
+      "Son sinónimos: hacen exactamente lo mismo.",
+      "URLEncode codifica texto para que sea válido en una URL (espacios → %20); HTMLEncode escapa caracteres HTML para mostrarlos como texto visible (< → &lt;).",
+      "URLEncode cifra contraseñas; HTMLEncode encripta cookies.",
+      "Solo existe URLEncode."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>Server.URLEncode</th><th>Server.HTMLEncode</th></tr>
+      <tr><td>Codifica para URL: espacios → <code>%20</code>, caracteres especiales → <code>%XX</code>.</td><td>Escapa HTML: <code>&lt;</code> → <code>&amp;lt;</code>, <code>&gt;</code> → <code>&amp;gt;</code>, <code>&amp;</code> → <code>&amp;amp;</code>.</td></tr>
+      <tr><td>Pasar datos en query string.</td><td>Mostrar HTML como texto sin que el browser lo interprete.</td></tr>
+      <tr><td><code>'Hola Mundo'</code> → <code>'Hola%20Mundo'</code></td><td><code>'&lt;BR&gt;'</code> → <code>'&amp;lt;BR&amp;gt;'</code></td></tr>
+    </table>`
+  },
+  {
+    id: 29, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿En qué se diferencian Server.Transfer y Server.Execute?",
+    options: [
+      "Transfer cambia la URL del navegador; Execute no.",
+      "Transfer NO devuelve el control a la página original (cambio definitivo); Execute SÍ regresa al terminar (como llamar a una subrutina).",
+      "Transfer solo funciona en ASP.NET; Execute solo en ASP clásico.",
+      "Ambos son idénticos."
+    ],
+    correct: 1,
+    explanation: `<table>
+      <tr><th>Server.Transfer('pagina.asp')</th><th>Server.Execute('pagina.asp')</th></tr>
+      <tr><td>El control NO vuelve a la página original.</td><td>El control SÍ vuelve al terminar.</td></tr>
+      <tr><td>Objetos y variables se transfieren a la nueva.</td><td>Funciona como llamada a subrutina/función.</td></tr>
+      <tr><td>Cambio definitivo de página.</td><td>Regresa para continuar la ejecución.</td></tr>
+      <tr><td>La URL NO cambia (transparente).</td><td>La URL NO cambia.</td></tr>
+    </table>`
+  },
+  {
+    id: 30, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿En qué archivo se definen los eventos Application_OnStart, Application_OnEnd, Session_OnStart y Session_OnEnd?",
+    options: [
+      "web.config",
+      "machine.config",
+      "Global.asax",
+      "IIS.ini"
+    ],
+    correct: 2,
+    explanation: `<p><strong>Application_OnStart</strong> y <strong>Application_OnEnd</strong>: vinculados al objeto <code>Application</code>. Se ejecutan cuando la aplicación web inicia/termina en el servidor.</p>
+    <p><strong>Session_OnStart</strong> y <strong>Session_OnEnd</strong>: vinculados al objeto <code>Session</code>. Cuando un usuario inicia/termina su sesión.</p>
+    <p><strong>Archivo: <code>Global.asax</code></strong> (Global Application File) — archivo de código DINÁMICO que ejecuta lógica en eventos del ciclo de vida.</p>
+    <pre><code>void Application_Start(object sender, EventArgs e) { /* app inicia */ }
+void Application_End(object sender, EventArgs e)   { /* app termina */ }
+void Session_Start(object sender, EventArgs e)     { /* nuevo usuario */ }
+void Session_End(object sender, EventArgs e)       { /* sesión termina */ }</code></pre>`
+  },
+  {
+    id: 31, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "Dentro de la jerarquía de objetos ASP, ¿cuál es el objeto encargado de la ENTRADA (información del cliente al servidor)?",
+    options: [
+      "Response",
+      "Request",
+      "Server",
+      "Session"
+    ],
+    correct: 1,
+    explanation: `<ul>
+      <li><strong>Server</strong> — núcleo: gestiona el entorno, crea componentes.</li>
+      <li><strong>Request</strong> — ENTRADA: cliente → servidor (Form, QueryString, Cookies).</li>
+      <li><strong>Response</strong> — SALIDA: servidor → cliente (Write, Redirect, Cookies).</li>
+      <li><strong>Application</strong> — estado global compartido entre usuarios.</li>
+      <li><strong>Session</strong> — estado individual por usuario.</li>
+      <li><strong>ASPError</strong> — errores.</li>
+      <li><strong>ObjectContext</strong> — transacciones.</li>
+    </ul>`
+  },
+  {
+    id: 32, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Cuál de los siguientes es un componente típico del servidor ASP?",
+    options: [
+      "onclick",
+      "AdRotator (MSWC.AdRotator)",
+      "viewport",
+      "navigator"
+    ],
+    correct: 1,
+    explanation: `<ul>
+      <li><strong>AdRotator</strong> (<code>MSWC.AdRotator</code>): banners rotatorios.</li>
+      <li><strong>ADODB.Connection</strong>: conexión a bases de datos.</li>
+      <li><strong>ADODB.RecordSet</strong>: consultas a BD.</li>
+      <li><strong>FileSystemObject</strong>: acceso al sistema de archivos.</li>
+      <li><strong>CDONTS/CDO</strong>: envío de emails desde ASP.</li>
+    </ul>
+    <p><code>onclick</code>, <code>viewport</code> y <code>navigator</code> son del cliente, no del servidor.</p>`
+  },
+  {
+    id: 33, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "De los archivos de configuración de ASP.NET, ¿cuál es DINÁMICO (ejecuta código) y no estático?",
+    options: [
+      "machine.config",
+      "web.config",
+      "Global.asax",
+      "IIS.config"
+    ],
+    correct: 2,
+    explanation: `<ul>
+      <li><strong>Machine.config</strong>: ESTÁTICO. Nivel servidor. Reglas para TODAS las aplicaciones .NET.</li>
+      <li><strong>Web.config</strong>: ESTÁTICO. Nivel aplicación. Cadenas de conexión, autenticación, sesión.</li>
+      <li><strong>Global.asax</strong>: DINÁMICO. Archivo de CÓDIGO que ejecuta lógica en eventos (Application_Start/End, Session_Start/End).</li>
+    </ul>
+    <p><strong>Diferencia clave:</strong> web.config y machine.config son archivos de CONFIGURACIÓN (estáticos). Global.asax es de CÓDIGO (dinámico).</p>`
+  },
+  {
+    id: 34, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Qué hace el componente AdRotator?",
+    options: [
+      "Encripta cookies de sesión.",
+      "Muestra banners publicitarios de forma rotatoria y aleatoria, según pesos de impresión definidos en un archivo de programación.",
+      "Rota las claves de cifrado del servidor.",
+      "Cambia el idioma de la página automáticamente."
+    ],
+    correct: 1,
+    explanation: `<p><strong>AdRotator</strong>: componente del servidor que muestra banners rotatorios. Cada carga muestra un banner diferente según pesos definidos.</p>
+    <p><strong>ASP clásico:</strong></p>
+    <pre><code>Set objAd = Server.CreateObject('MSWC.AdRotator')
+Response.Write(objAd.GetAdvertisement('ads.txt'))</code></pre>
+    <p><strong>ASP.NET</strong> (control declarativo, archivo XML):</p>
+    <pre><code>&lt;asp:AdRotator ID="AdRotator1" runat="server" AdvertisementFile="~/ads.xml" /&gt;</code></pre>
+    <p>El XML tiene <code>&lt;Ad&gt;</code> con <code>&lt;ImageUrl&gt;</code>, <code>&lt;NavigateUrl&gt;</code>, <code>&lt;AlternateText&gt;</code> e <code>&lt;Impressions&gt;</code>.</p>`
+  },
+  {
+    id: 35, block: 4, blockName: "ASP / ASP.NET y modelo de objetos",
+    q: "¿Cuál de los siguientes es un componente del IIS (Internet Information Server)?",
+    options: [
+      "Servicio WWW (sirve páginas web vía HTTP/HTTPS).",
+      "JavaScript Engine V8.",
+      "Microsoft Word.",
+      "MySQL Server."
+    ],
+    correct: 0,
+    explanation: `<p>Componentes del IIS:</p>
+    <ul>
+      <li><strong>Servicio WWW:</strong> páginas web vía HTTP/HTTPS.</li>
+      <li><strong>Servicio FTP:</strong> transferencia de archivos.</li>
+      <li><strong>Servicio SMTP:</strong> envío de correo electrónico.</li>
+      <li><strong>Motor ASP/ASP.NET:</strong> procesa scripts del servidor.</li>
+      <li><strong>Seguridad:</strong> SSL/TLS, autenticación de Windows, filtros por IP.</li>
+      <li><strong>Sistema de logs.</strong></li>
+    </ul>
+    <p>Para verificar instalación: ir a <code>http://localhost</code>, o verificar el servicio 'World Wide Web Publishing Service'.</p>`
+  },
+
+  // BLOQUE 5
+  {
+    id: 36, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿En qué consiste el 'problema de estado' en HTTP?",
+    options: [
+      "HTTP es demasiado rápido para mantener el estado.",
+      "HTTP es un protocolo sin estado (stateless): cada solicitud es independiente y el servidor no recuerda información de solicitudes anteriores.",
+      "HTTP guarda el estado en el servidor pero los clientes lo pierden.",
+      "HTTP solo permite una sesión activa por servidor a la vez."
+    ],
+    correct: 1,
+    explanation: `<p>HTTP es <strong>sin estado (stateless)</strong>: cada solicitud es independiente. No hay forma nativa de saber si dos solicitudes vienen del mismo usuario.</p>
+    <h4>Soluciones del lado del CLIENTE</h4>
+    <ul>
+      <li><strong>Cookies:</strong> archivos de texto en el browser.</li>
+      <li><strong>Hidden Fields:</strong> <code>&lt;input type='hidden'&gt;</code>.</li>
+      <li><strong>View State:</strong> campo oculto <code>__VIEWSTATE</code> de ASP.NET.</li>
+      <li><strong>Query Strings:</strong> datos en la URL.</li>
+    </ul>
+    <h4>Soluciones del lado del SERVIDOR</h4>
+    <ul>
+      <li><strong>Session Object:</strong> información por usuario.</li>
+      <li><strong>Application Object:</strong> compartida entre usuarios.</li>
+      <li><strong>Base de datos SQL:</strong> persistencia duradera.</li>
+    </ul>`
+  },
+  {
+    id: 37, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Qué es una cookie?",
+    options: [
+      "Un archivo binario ejecutable enviado por el servidor.",
+      "Un pequeño archivo de texto (máx. 4KB) almacenado en el navegador del cliente por instrucción del servidor, que persiste información entre solicitudes HTTP.",
+      "Una variable de sesión almacenada en la RAM del servidor.",
+      "Un componente COM del IIS."
+    ],
+    correct: 1,
+    explanation: `<p>Una <strong>cookie</strong> es un pequeño archivo de texto (máx. 4KB), creado originalmente por Netscape, almacenado en el navegador del cliente <em>por instrucción del servidor</em>. Permite persistir información entre solicitudes HTTP, resolviendo el problema del protocolo sin estado.</p>
+    <p>Se crean con <code>Response.Cookies</code> y se leen con <code>Request.Cookies</code>.</p>`
+  },
+  {
+    id: 38, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Qué propiedad determina si una cookie es PERSISTENTE (consistente) o de sesión?",
+    options: [
+      "Domain",
+      "Expires (si está definida → persistente, vive en disco; si no → de sesión, vive en RAM).",
+      "Secure",
+      "Path"
+    ],
+    correct: 1,
+    explanation: `<p><strong>No Consistentes (de Sesión):</strong> NO tienen <code>.Expires</code> definida. 'Nacen y mueren' con la sesión del navegador. Se guardan en RAM.</p>
+    <p><strong>Consistentes (Persistentes):</strong> SÍ tienen <code>.Expires</code> (fecha de vencimiento). Se almacenan en disco y persisten aunque se cierre el navegador, hasta la fecha indicada.</p>
+    <pre><code>Response.Cookies('colorPreferido').Expires = '10/10/2050'   ' Consistente
+' Sin .Expires → se borra al cerrar el browser (No Consistente)</code></pre>`
+  },
+  {
+    id: 39, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Qué es una cookie DICCIONARIO?",
+    options: [
+      "Una cookie que solo guarda palabras del diccionario del idioma.",
+      "Una cookie que almacena múltiples pares clave-valor bajo un mismo nombre, como una colección de valores relacionados.",
+      "Una cookie cifrada con clave pública.",
+      "Una cookie con timeout fijo de 24 horas."
+    ],
+    correct: 1,
+    explanation: `<p><strong>Cookie simple:</strong> almacena un único par clave-valor.</p>
+    <pre><code>Response.Cookies('Pais') = 'Argentina'
+// Leer: Request.Cookies('Pais')</code></pre>
+    <p><strong>Cookie diccionario:</strong> almacena múltiples pares clave-valor bajo un mismo nombre.</p>
+    <pre><code>Response.Cookies('color')('Fondo')  = 'Verde'
+Response.Cookies('color')('Texto')  = 'Negro'
+Response.Cookies('color')('Marcas') = 'Rojo'
+// Leer subclave: Request.Cookies('color')('Fondo')</code></pre>`
+  },
+  {
+    id: 40, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Dónde están las cookies dentro del modelo de objetos ASP?",
+    options: [
+      "Como propiedades del objeto Application.",
+      "Como colecciones dentro de Request.Cookies (para leer) y Response.Cookies (para crear/modificar).",
+      "Como métodos del objeto Server.",
+      "Como un objeto independiente fuera del modelo de ASP."
+    ],
+    correct: 1,
+    explanation: `<p>Las cookies son <strong>colecciones</strong> dentro de dos objetos del modelo ASP:</p>
+    <ul>
+      <li><code>Request.Cookies</code>: cookies enviadas POR el cliente al servidor (para leer).</li>
+      <li><code>Response.Cookies</code>: cookies a enviar DESDE el servidor al cliente (para crear/modificar).</li>
+    </ul>
+    <p><strong>Propiedades:</strong> <code>.Value</code>, <code>.Values[]</code> (diccionario), <code>.Expires</code>, <code>.Domain</code>, <code>.Path</code>, <code>.Secure</code>, <code>.HttpOnly</code>, <code>.HasKeys</code>.</p>
+    <p>Las cookies no tienen eventos propios; se gestionan a través de Request y Response.</p>`
+  },
+  {
+    id: 41, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Cómo se detecta en código si una cookie es un diccionario?",
+    options: [
+      "Con la propiedad .HasKeys (devuelve true si es diccionario).",
+      "Con .Length > 1.",
+      "Con .Expires definido.",
+      "Iterando ciegamente y manejando errores con try/catch."
+    ],
+    correct: 0,
+    explanation: `<p>Se reconoce porque usa <code>.Values['subclave']</code> en lugar de <code>.Value</code>. Se verifica con <strong><code>.HasKeys</code></strong> (true si es diccionario).</p>
+    <p>Para recorrerla: iterar sobre las claves con foreach sobre <code>.Values.Keys</code>.</p>
+    <pre><code>// ASP clásico:
+If Request.Cookies('Color').HasKeys Then
+  For Each clave In Request.Cookies('Color')
+    valor = Request.Cookies('Color')(clave)
+  Next
+End If
+
+// ASP.NET (C#):
+if (Request.Cookies['Color'].HasKeys) {
+  foreach (string clave in Request.Cookies['Color'].Values.Keys) {
+    string valor = Request.Cookies['Color'].Values[clave];
+  }
+}</code></pre>`
+  },
+  {
+    id: 42, block: 5, blockName: "Estado, cookies y configuración",
+    q: "¿Qué es Global.asax?",
+    options: [
+      "Un archivo de configuración estático con cadenas de conexión y autenticación.",
+      "El archivo de CÓDIGO dinámico que maneja eventos del ciclo de vida de la aplicación ASP.NET (Application_Start/End, Session_Start/End).",
+      "Un archivo XML con los banners del componente AdRotator.",
+      "El log de errores del servidor IIS."
+    ],
+    correct: 1,
+    explanation: `<p><strong>Global.asax</strong> (Global Application File): archivo de código que maneja eventos del ciclo de vida de la aplicación ASP.NET. A diferencia de web.config y machine.config (estáticos), Global.asax es DINÁMICO: ejecuta código real.</p>
+    <p><strong>Application:</strong> usa <code>Application_Start</code> para inicializar variables globales al arrancar el servidor.</p>
+    <p><strong>Session:</strong> usa <code>Session_Start</code> para detectar un nuevo usuario, asignar SessionID y crear su espacio privado.</p>
+    <pre><code>void Application_Start(object sender, EventArgs e)  { /* UNA VEZ al iniciar la app */ }
+void Application_End(object sender, EventArgs e)    { /* al detener la app */ }
+void Application_Error(object sender, EventArgs e)  { /* error no manejado */ }
+void Session_Start(object sender, EventArgs e)      { /* nuevo usuario */ }
+void Session_End(object sender, EventArgs e)        { /* sesión termina */ }</code></pre>`
+  },
+
+  // BLOQUE 6
+  {
+    id: 43, block: 6, blockName: "Criptografía",
+    q: "¿Cómo se logra el NO REPUDIO en criptografía?",
+    options: [
+      "Cifrando todo el mensaje con la clave pública del receptor.",
+      "Mediante firma digital: el emisor cifra un hash del mensaje con SU clave privada; solo él pudo haberlo firmado.",
+      "Usando contraseñas suficientemente largas y complejas.",
+      "Conectándose por HTTPS al servidor."
+    ],
+    correct: 1,
+    explanation: `<p>El <strong>no repudio</strong> se logra mediante <strong>FIRMA DIGITAL</strong>:</p>
+    <ol>
+      <li>El emisor genera un <em>hash</em> (huella dactilar) del mensaje.</li>
+      <li>El hash se cifra con la <strong>CLAVE PRIVADA</strong> del emisor → firma digital.</li>
+      <li>El emisor envía mensaje + firma digital.</li>
+      <li>El receptor descifra la firma con la <strong>CLAVE PÚBLICA</strong> del emisor → obtiene el hash original.</li>
+      <li>El receptor genera un hash del mensaje recibido y compara: si coinciden, es auténtico.</li>
+    </ol>
+    <p>El no repudio existe porque <strong>SOLO el emisor tiene su clave privada</strong>: no puede negar haber firmado el mensaje. Está legalmente reconocido en muchos países.</p>`
+  }
+];
+
+// ----- App state -----
+const STORAGE_KEY = 'quiz_parciales_mc_v2';
+let state = {
+  current: 0,
+  filteredList: [],
+  answers: {},        // id -> { picked: index, isCorrect: bool, shuffledMap: [origIdx,...] }
+  shuffleSeed: 0
+};
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state.answers = JSON.parse(raw) || {};
+  } catch (e) { state.answers = {}; }
+}
+function saveProgress() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.answers)); } catch (e) {}
+}
+
+function shuffledIndexes(n, seed) {
+  // deterministic shuffle based on seed
+  const arr = Array.from({length: n}, (_, i) => i);
+  let s = seed;
+  for (let i = arr.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function applyFilters() {
+  const block = document.getElementById('blockFilter').value;
+  const mode = document.getElementById('modeFilter').value;
+  let list = QUESTIONS.slice();
+  if (block !== 'all') list = list.filter(q => q.block == block);
+  if (mode === 'pending') list = list.filter(q => !state.answers[q.id]);
+  else if (mode === 'wrong') list = list.filter(q => state.answers[q.id] && !state.answers[q.id].isCorrect);
+  state.filteredList = list;
+  if (state.current >= list.length) state.current = 0;
+  render();
+}
+
+function shuffleAll() {
+  // shuffle question order
+  const arr = state.filteredList;
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  state.current = 0;
+  render();
+}
+
+function getShuffleMap(q) {
+  const existing = state.answers[q.id];
+  if (existing && existing.shuffledMap) return existing.shuffledMap;
+  return shuffledIndexes(q.options.length, q.id * 137 + 7);
+}
+
+function pickAnswer(displayedIdx) {
+  const q = state.filteredList[state.current];
+  if (!q) return;
+  if (state.answers[q.id]) return; // already answered
+  const map = getShuffleMap(q);
+  const originalIdx = map[displayedIdx];
+  const isCorrect = originalIdx === q.correct;
+  state.answers[q.id] = {
+    picked: displayedIdx,
+    isCorrect: isCorrect,
+    shuffledMap: map
+  };
+  saveProgress();
+  render();
+}
+
+function render() {
+  const total = QUESTIONS.length;
+  let ok = 0, bad = 0;
+  for (const id in state.answers) {
+    if (state.answers[id].isCorrect) ok++; else bad++;
+  }
+  const done = ok + bad;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statOk').textContent = ok;
+  document.getElementById('statBad').textContent = bad;
+  document.getElementById('statPending').textContent = total - done;
+  document.getElementById('statScore').textContent = done > 0 ? `${Math.round(ok / done * 100)}%` : '—';
+  document.getElementById('progressOk').style.width = (ok / total * 100) + '%';
+  document.getElementById('progressBad').style.width = (bad / total * 100) + '%';
+
+  const wrap = document.getElementById('cardWrap');
+  if (!state.filteredList.length) {
+    wrap.innerHTML = `<div class="card-container"><div class="empty">No hay preguntas que coincidan con el filtro.</div></div>`;
+    document.getElementById('position').textContent = '—';
+    document.getElementById('prevBtn').disabled = true;
+    document.getElementById('nextBtn').disabled = true;
+    return;
+  }
+  const q = state.filteredList[state.current];
+  const answered = !!state.answers[q.id];
+  const map = getShuffleMap(q);
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  let optsHtml = '';
+  for (let i = 0; i < map.length; i++) {
+    const origIdx = map[i];
+    const text = q.options[origIdx];
+    let cls = 'option';
+    let icon = '';
+    if (answered) {
+      const a = state.answers[q.id];
+      if (origIdx === q.correct) { cls += ' correct'; icon = '<span class="icon">✓</span>'; }
+      else if (a.picked === i) { cls += ' wrong'; icon = '<span class="icon">✗</span>'; }
+    }
+    optsHtml += `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="pickAnswer(${i})">
+      <span class="letter">${letters[i]}</span>
+      <span class="text">${text}</span>
+      ${icon}
+    </button>`;
+  }
+
+  let feedbackHtml = '';
+  let explanationHtml = '';
+  if (answered) {
+    const a = state.answers[q.id];
+    feedbackHtml = a.isCorrect
+      ? `<div class="feedback-banner ok">✓ ¡Correcto!</div>`
+      : `<div class="feedback-banner bad">✗ Incorrecto. La respuesta correcta está marcada en verde.</div>`;
+    explanationHtml = `<div class="explanation"><h4>Explicación</h4>${q.explanation}</div>`;
+  }
+
+  const statusBadge = answered
+    ? (state.answers[q.id].isCorrect ? '<span style="color:#7fe89a">✓ correcta</span>' : '<span style="color:#ff9aa5">✗ errada</span>')
+    : '<span style="opacity:0.7">— sin responder</span>';
+
+  wrap.innerHTML = `
+    <div class="card-container">
+      <div class="card-meta">
+        <span class="block-tag">Bloque ${q.block} · ${q.blockName}</span>
+        <span>Pregunta #${q.id} &nbsp;|&nbsp; ${statusBadge}</span>
+      </div>
+      <div class="card-body">
+        <div class="question">${q.q}</div>
+        <div class="options">${optsHtml}</div>
+        ${feedbackHtml}
+        ${explanationHtml}
+      </div>
+    </div>
+  `;
+  document.getElementById('position').innerHTML = `<strong>${state.current + 1}</strong> / ${state.filteredList.length}`;
+  document.getElementById('prevBtn').disabled = state.current === 0;
+  document.getElementById('nextBtn').disabled = state.current >= state.filteredList.length - 1;
+}
+
+function next() {
+  if (state.current < state.filteredList.length - 1) {
+    state.current++;
+    render();
+  }
+}
+function prev() {
+  if (state.current > 0) {
+    state.current--;
+    render();
+  }
+}
+
+// ----- Wire up -----
+document.getElementById('blockFilter').addEventListener('change', applyFilters);
+document.getElementById('modeFilter').addEventListener('change', applyFilters);
+document.getElementById('shuffleBtn').addEventListener('click', shuffleAll);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('¿Reiniciar todo el progreso? Esto borra todas tus respuestas.')) {
+    state.answers = {};
+    saveProgress();
+    applyFilters();
+  }
+});
+document.getElementById('prevBtn').addEventListener('click', prev);
+document.getElementById('nextBtn').addEventListener('click', next);
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') next();
+  else if (e.key === 'ArrowLeft') prev();
+  else if (['1','2','3','4','a','b','c','d','A','B','C','D'].includes(e.key)) {
+    let idx;
+    if (['1','2','3','4'].includes(e.key)) idx = parseInt(e.key) - 1;
+    else idx = e.key.toLowerCase().charCodeAt(0) - 97;
+    const q = state.filteredList[state.current];
+    if (q && !state.answers[q.id] && idx < q.options.length) pickAnswer(idx);
+  }
+});
+
+loadProgress();
+applyFilters();
+</script>
+
+</body>
+</html>
