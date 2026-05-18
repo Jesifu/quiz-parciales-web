@@ -1300,10 +1300,15 @@ function render() {
   const map = getShuffleMap(q);
   const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
   let optsHtml = '';
   for (let i = 0; i < map.length; i++) {
     const origIdx = map[i];
-    const text = q.options[origIdx];
+    const text = escapeHtml(q.options[origIdx]);
     let cls = 'option';
     let icon = '';
     if (answered) {
@@ -1339,7 +1344,7 @@ function render() {
         <span>Pregunta #${q.id} &nbsp;|&nbsp; ${statusBadge}</span>
       </div>
       <div class="card-body">
-        <div class="question">${q.q}</div>
+        <div class="question">${escapeHtml(q.q)}</div>
         <div class="options">${optsHtml}</div>
         ${feedbackHtml}
         ${explanationHtml}
